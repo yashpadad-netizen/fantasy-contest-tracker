@@ -30,11 +30,11 @@
     </article>
   </div>
 
-  <div class="data-actions" *ngIf="authService.isAdmin()">
-    <button type="button" class="btn btn-info" [disabled]="contests.length === 0" (click)="exportAllContests()">
+  <div class="data-actions">
+    <button type="button" class="btn btn-info" [disabled]="contests.length === 0" (click)="exportAllContests()" *ngIf="authService.isAdmin()">
       Export All
     </button>
-    <button type="button" class="btn btn-primary" [disabled]="filteredContests.length === 0" (click)="exportAllContestsPdf()">
+    <button type="button" class="btn btn-primary" [disabled]="filteredContests.length === 0" (click)="exportAllContestsPdf()" *ngIf="authService.isAdmin()">
       Export PDF
     </button>
     <label class="btn btn-secondary file-input">

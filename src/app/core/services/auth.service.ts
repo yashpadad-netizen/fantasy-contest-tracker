@@ -20,14 +20,14 @@ export class AuthService {
       name: 'Admin',
       isAdmin: true,
       username: 'admin',
-      passwordHash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'
+      passwordHash: '9a0c5eb0b0cd3658d3aeefc41a63d8923264f5b454106bfa9a21fce9e29db989'
     },
     {
       id: '2',
       name: 'User',
       isAdmin: false,
       username: 'user',
-      passwordHash: '04f8996da763b7a969b1028ee3007569eaf3a635486ddab211d512c85b9df8fb'
+      passwordHash: '3e7c19576488862816f13b512cacf3e4ba97dd97243ea0bd6a2ad1642d86ba72'
     }
   ];
   private currentUser: User | null = null;

@@ -1,30 +1,32 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Contest } from '../models/models';
-import { PlayerStats } from '../models/models';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Contest, PlayerStats } from '../models/models';
+import { API_BASE } from './api.config';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ContestService {
-  private readonly storageKey = 'contests';
-  private contestsSubject = new BehaviorSubject<Contest[]>(this.loadContests());
+  private contestsSubject = new BehaviorSubject<Contest[]>([]);
   private backupReminderSubject = new BehaviorSubject<boolean>(false);
   contests$ = this.contestsSubject.asObservable();
   backupReminder$ = this.backupReminderSubject.asObservable();
 
-  private loadContests(): Contest[] {
-    const data = localStorage.getItem(this.storageKey);
-    if (!data) {
-      return [];
+  constructor(private http: HttpClient, private authService: AuthService) {
+    if (this.authService.getToken()) {
+      this.fetchContests();
     }
+  }
 
-    try {
-      const contests = JSON.parse(data) as Contest[];
-      return contests.map((contest) => this.normalizeContest(contest));
-    } catch {
-      return [];
-    }
+  private makeHeaders() {
+    const token = this.authService.getToken();
+    return {
+      headers: new HttpHeaders({
+        Authorization: token ? `Bearer ${token}` : ''
+      })
+    };
   }
 
   private normalizeContest(contest: Contest): Contest {
@@ -41,12 +43,32 @@ export class ContestService {
     };
   }
 
-  private saveContests(contests: Contest[]): void {
-    localStorage.setItem(this.storageKey, JSON.stringify(contests));
-  }
-
   private markBackupReminderPending(contests: Contest[]): void {
     this.backupReminderSubject.next(contests.length > 0);
+  }
+
+  refreshContests(): void {
+    this.fetchContests();
+  }
+
+  clearContests(): void {
+    this.contestsSubject.next([]);
+    this.markBackupReminderPending([]);
+  }
+
+  private fetchContests(): void {
+    this.http.get<Contest[]>(`${API_BASE}/contests`, this.makeHeaders()).subscribe({
+      next: (contests) => {
+        const normalized = contests.map((contest) => this.normalizeContest(contest));
+        this.contestsSubject.next(normalized);
+        this.markBackupReminderPending(normalized);
+      },
+      error: (err) => {
+        console.error('Could not load contests from server', err);
+        this.contestsSubject.next([]);
+        this.markBackupReminderPending([]);
+      }
+    });
   }
 
   getContests(): Contest[] {
@@ -54,42 +76,94 @@ export class ContestService {
   }
 
   addContest(contest: Contest): void {
-    const contests = [...this.getContests(), this.normalizeContest(contest)];
-    this.saveContests(contests);
-    this.contestsSubject.next(contests);
-    this.markBackupReminderPending(contests);
+    const current = [...this.getContests(), this.normalizeContest(contest)];
+    this.contestsSubject.next(current);
+    this.markBackupReminderPending(current);
+
+    this.http.post<Contest>(`${API_BASE}/contests`, contest, this.makeHeaders()).subscribe({
+      next: (savedContest) => {
+        const normalized = this.normalizeContest(savedContest);
+        const existing = this.getContests();
+        if (!existing.find((item) => item.id === normalized.id)) {
+          const updated = [...existing, normalized];
+          this.contestsSubject.next(updated);
+          this.markBackupReminderPending(updated);
+        }
+      },
+      error: (err) => {
+        console.error('Could not save contest to server', err);
+      }
+    });
   }
 
   addManyContests(contestsToAdd: Contest[]): void {
-    const existing = this.getContests();
-    const newContests = contestsToAdd.map((contest) => this.normalizeContest(contest));
-    const merged = [...existing, ...newContests];
-    this.saveContests(merged);
+    const normalized = contestsToAdd.map((contest) => this.normalizeContest(contest));
+    const merged = [...this.getContests(), ...normalized];
     this.contestsSubject.next(merged);
     this.markBackupReminderPending(merged);
+
+    this.http.post<Contest[]>(`${API_BASE}/contests/import`, contestsToAdd, this.makeHeaders()).subscribe({
+      next: (savedContests) => {
+        const saved = savedContests.map((contest) => this.normalizeContest(contest));
+        this.contestsSubject.next(saved);
+        this.markBackupReminderPending(saved);
+      },
+      error: (err) => {
+        console.error('Could not import contests to server', err);
+      }
+    });
   }
 
   replaceContests(contests: Contest[]): void {
     const normalized = contests.map((contest) => this.normalizeContest(contest));
-    this.saveContests(normalized);
     this.contestsSubject.next(normalized);
     this.markBackupReminderPending(normalized);
+
+    this.http.put<Contest[]>(`${API_BASE}/contests`, contests, this.makeHeaders()).subscribe({
+      next: (savedContests) => {
+        const saved = savedContests.map((contest) => this.normalizeContest(contest));
+        this.contestsSubject.next(saved);
+        this.markBackupReminderPending(saved);
+      },
+      error: (err) => {
+        console.error('Could not replace contests on server', err);
+      }
+    });
   }
 
   updateContest(updatedContest: Contest): void {
-    const contests = this.getContests().map((contest) =>
+    const updated = this.getContests().map((contest) =>
       contest.id === updatedContest.id ? this.normalizeContest(updatedContest) : contest
     );
-    this.saveContests(contests);
-    this.contestsSubject.next(contests);
-    this.markBackupReminderPending(contests);
+    this.contestsSubject.next(updated);
+    this.markBackupReminderPending(updated);
+
+    this.http.put<Contest>(`${API_BASE}/contests/${updatedContest.id}`, updatedContest, this.makeHeaders()).subscribe({
+      next: (savedContest) => {
+        const normalized = this.normalizeContest(savedContest);
+        const refreshed = this.getContests().map((contest) =>
+          contest.id === normalized.id ? normalized : contest
+        );
+        this.contestsSubject.next(refreshed);
+        this.markBackupReminderPending(refreshed);
+      },
+      error: (err) => {
+        console.error('Could not update contest on server', err);
+      }
+    });
   }
 
   deleteContest(id: string): void {
-    const contests = this.getContests().filter((contest) => contest.id !== id);
-    this.saveContests(contests);
-    this.contestsSubject.next(contests);
-    this.markBackupReminderPending(contests);
+    const updated = this.getContests().filter((contest) => contest.id !== id);
+    this.contestsSubject.next(updated);
+    this.markBackupReminderPending(updated);
+
+    this.http.delete(`${API_BASE}/contests/${id}`, this.makeHeaders()).subscribe({
+      next: () => {},
+      error: (err) => {
+        console.error('Could not delete contest from server', err);
+      }
+    });
   }
 
   dismissBackupReminder(): void {

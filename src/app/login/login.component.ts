@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
+import { ContestService } from '../core/services/contest.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -19,6 +20,7 @@ export class LoginComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    private contestService: ContestService,
     private router: Router
   ) {
     this.loginForm = this.fb.group({
@@ -41,6 +43,7 @@ export class LoginComponent {
     this.isSubmitting = false;
 
     if (loggedIn) {
+      this.contestService.refreshContests();
       this.router.navigate(['/dashboard']);
       return;
     }

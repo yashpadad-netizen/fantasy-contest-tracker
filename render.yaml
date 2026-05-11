@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     branch: master
-    buildCommand: npm install --include=dev && npm run build:prod
+    buildCommand: npm install --include=dev && node --max-old-space-size=512 ./node_modules/@angular/cli/bin/ng build --configuration production
     startCommand: npm run start:prod
     envVars:
       - key: JWT_SECRET

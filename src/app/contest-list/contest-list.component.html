@@ -1,0 +1,152 @@
+<section class="page-head">
+  <div>
+    <h2 class="page-title">Contest Hub</h2>
+    <p class="page-subtitle">Track entries, results, and contest-level outcomes from one place.</p>
+  </div>
+
+  <div class="head-actions">
+    <a routerLink="/contests/new" class="btn btn-primary" *ngIf="authService.isAdmin()">Create Contest</a>
+    <a routerLink="/dashboard" class="btn btn-secondary">Open Dashboard</a>
+  </div>
+</section>
+
+<section class="panel section-block overview">
+  <div class="metric-grid">
+    <article class="metric-card">
+      <p class="metric-label">Total Contests</p>
+      <p class="metric-value">{{ filteredContests.length }}</p>
+    </article>
+    <article class="metric-card">
+      <p class="metric-label">Pending</p>
+      <p class="metric-value">{{ pendingContests }}</p>
+    </article>
+    <article class="metric-card">
+      <p class="metric-label">Completed</p>
+      <p class="metric-value">{{ completedContests }}</p>
+    </article>
+    <article class="metric-card">
+      <p class="metric-label">Total Invested</p>
+      <p class="metric-value">&#8377;{{ totalInvested | number:'1.0-0' }}</p>
+    </article>
+  </div>
+
+  <div class="data-actions" *ngIf="authService.isAdmin()">
+    <button type="button" class="btn btn-info" [disabled]="contests.length === 0" (click)="exportAllContests()">
+      Export All
+    </button>
+    <button type="button" class="btn btn-primary" [disabled]="filteredContests.length === 0" (click)="exportAllContestsPdf()">
+      Export PDF
+    </button>
+    <label class="btn btn-secondary file-input">
+      Import JSON
+      <input type="file" accept=".json" (change)="importContests($event)">
+    </label>
+  </div>
+</section>
+
+<section class="panel section-block">
+  <h3>History Filters</h3>
+  <div class="view-toggle">
+    <button type="button" class="btn" [class.btn-primary]="viewMode === 'cards'" [class.btn-secondary]="viewMode !== 'cards'" (click)="setViewMode('cards')">Cards</button>
+    <button type="button" class="btn" [class.btn-primary]="viewMode === 'table'" [class.btn-secondary]="viewMode !== 'table'" (click)="setViewMode('table')">Table</button>
+  </div>
+  <div class="filter-grid">
+    <label>
+      From Date
+      <input type="date" [(ngModel)]="filterFromDate" />
+    </label>
+    <label>
+      To Date
+      <input type="date" [(ngModel)]="filterToDate" />
+    </label>
+    <label>
+      Player
+      <select [(ngModel)]="filterPlayer">
+        <option value="">All Players</option>
+        <option *ngFor="let player of uniquePlayers" [value]="player">{{ player }}</option>
+      </select>
+    </label>
+    <label>
+      Platform
+      <select [(ngModel)]="filterPlatform">
+        <option value="all">All Platforms</option>
+        <option value="my11circle">My11Circle</option>
+        <option value="other">Other</option>
+      </select>
+    </label>
+  </div>
+  <button type="button" class="btn btn-secondary" (click)="clearFilters()">Clear Filters</button>
+</section>
+
+<section *ngIf="filteredContests.length && viewMode === 'cards'" class="contest-grid">
+  <article *ngFor="let contest of filteredContests" class="panel contest-card" [class.done]="contest.isCompleted">
+    <div class="card-head">
+      <h3>{{ contest.name }}</h3>
+      <span class="badge" [class.badge-success]="contest.isCompleted" [class.badge-warn]="!contest.isCompleted">
+        {{ contest.isCompleted ? 'Completed' : 'Pending' }}
+      </span>
+    </div>
+
+    <div class="card-details">
+      <p><span>Date:</span> {{ contest.date | date:'mediumDate' }}</p>
+      <p><span>Platform:</span> {{ getPlatformLabel(contest) }}</p>
+      <p *ngIf="contest.matchName"><span>Match:</span> {{ contest.matchName }}</p>
+      <p *ngIf="contest.tournament"><span>Tournament:</span> {{ contest.tournament }}</p>
+      <p *ngIf="contest.contestType"><span>Type:</span> {{ contest.contestType }}</p>
+      <p><span>Entry Fee:</span> &#8377;{{ contest.entryFee }}</p>
+      <p><span>Participants:</span> {{ contest.participants.length }}</p>
+      <p><span>Winner:</span> {{ contest.winner || '-' }}</p>
+      <p><span>Total Entries:</span> {{ getTotalEntries(contest) }}</p>
+      <p><span>Invested:</span> &#8377;{{ getTotalInvested(contest) }}</p>
+      <p *ngIf="contest.prizePool"><span>Prize Pool:</span> &#8377;{{ contest.prizePool }}</p>
+      <p *ngIf="contest.notes"><span>Notes:</span> {{ contest.notes }}</p>
+    </div>
+
+    <div class="card-actions">
+      <a [routerLink]="['/contests', contest.id]" class="btn btn-primary">View</a>
+      <a *ngIf="!contest.isCompleted && authService.isAdmin()" [routerLink]="['/contests', contest.id, 'results']" class="btn btn-secondary">
+        Record Results
+      </a>
+      <button type="button" class="btn btn-danger" *ngIf="authService.isAdmin()" (click)="deleteContest(contest.id)">Delete</button>
+    </div>
+  </article>
+</section>
+
+<section *ngIf="filteredContests.length && viewMode === 'table'" class="panel section-block">
+  <div class="list-table-wrap">
+    <table class="list-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Contest</th>
+          <th>Platform</th>
+          <th>Participants</th>
+          <th>Entries</th>
+          <th>Invested</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let contest of filteredContests">
+          <td>{{ contest.date | date:'mediumDate' }}</td>
+          <td>{{ contest.name }}</td>
+          <td>{{ getPlatformLabel(contest) }}</td>
+          <td>{{ contest.participants.length }}</td>
+          <td>{{ getTotalEntries(contest) }}</td>
+          <td>₹{{ getTotalInvested(contest) | number:'1.0-0' }}</td>
+          <td>{{ contest.isCompleted ? 'Completed' : 'Pending' }}</td>
+          <td>
+            <a [routerLink]="['/contests', contest.id]" class="btn btn-secondary">View</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section *ngIf="!filteredContests.length" class="panel empty-state">
+  <h3>No contests yet</h3>
+  <p>Start by creating your first contest and adding participants.</p>
+  <a routerLink="/contests/new" class="btn btn-primary" *ngIf="authService.isAdmin()">Create First Contest</a>
+</section>

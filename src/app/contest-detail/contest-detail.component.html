@@ -1,0 +1,101 @@
+<section *ngIf="contest; else missingContest" class="detail-layout">
+  <header class="panel head-block">
+    <div>
+      <h2 class="page-title">{{ contest.name }}</h2>
+      <p class="page-subtitle">{{ contest.date | date:'fullDate' }}</p>
+      <p class="page-subtitle" *ngIf="contest.matchName">{{ contest.matchName }}</p>
+      <p class="page-subtitle" *ngIf="contest.tournament">{{ contest.tournament }} <span *ngIf="contest.contestType">| {{ contest.contestType }}</span></p>
+    </div>
+
+    <div class="head-actions">
+      <span class="badge" [class.badge-success]="contest.isCompleted" [class.badge-warn]="!contest.isCompleted">
+        {{ contest.isCompleted ? 'Completed' : 'Pending Results' }}
+      </span>
+      <button type="button" class="btn btn-info" (click)="exportContest()">Export Contest</button>
+      <button type="button" class="btn btn-primary" (click)="exportContestPdf()">Export PDF</button>
+      <button type="button" class="btn btn-danger" *ngIf="authService.isAdmin()" (click)="deleteContest()">Delete Contest</button>
+      <button type="button" class="btn btn-secondary" (click)="goBack()">Back</button>
+    </div>
+  </header>
+
+  <section class="panel body-block">
+    <div class="metric-grid" *ngIf="contestSummary">
+      <article class="metric-card">
+        <p class="metric-label">Participants</p>
+        <p class="metric-value">{{ contestSummary.totalParticipants }}</p>
+      </article>
+      <article class="metric-card">
+        <p class="metric-label">Entry Fee</p>
+        <p class="metric-value">&#8377;{{ fixedEntryFee }}</p>
+      </article>
+      <article class="metric-card">
+        <p class="metric-label">Prize Pool (Auto)</p>
+        <p class="metric-value">&#8377;{{ contestSummary.prizePool || 0 }}</p>
+      </article>
+    </div>
+
+    <div class="meta-actions" *ngIf="contest.my11circleId || contest.my11circleUrl">
+      <p *ngIf="contest.my11circleId"><strong>My11Circle ID:</strong> {{ contest.my11circleId }}</p>
+      <button *ngIf="contest.my11circleUrl" type="button" class="btn btn-secondary" (click)="openMy11Circle()">
+        Open My11Circle
+      </button>
+    </div>
+
+    <div class="meta-actions" *ngIf="contest.notes">
+      <p><strong>Notes:</strong> {{ contest.notes }}</p>
+    </div>
+
+    <div class="result-prompt" *ngIf="!contest.isCompleted && resultCount === 0">
+      <p>Results are not recorded yet.</p>
+      <button type="button" class="btn btn-primary" (click)="openResultsEntry()">Record Results</button>
+    </div>
+
+    <div class="table-wrap" *ngIf="contest.participants.length">
+      <table>
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th *ngIf="resultCount">Rank</th>
+            <th *ngIf="resultCount">Winnings</th>
+            <th *ngIf="resultCount">P/L</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let participant of contest.participants">
+            <td>{{ participant.name }}</td>
+            <td *ngIf="resultCount">{{ getResultForPlayer(participant.id)?.rank || '-' }}</td>
+            <td *ngIf="resultCount">&#8377;{{ getResultForPlayer(participant.id)?.winningAmount || 0 }}</td>
+            <td *ngIf="resultCount" [class.text-positive]="getPlayerProfitLoss(participant.id) > 0" [class.text-negative]="getPlayerProfitLoss(participant.id) < 0">
+              {{ getPlayerProfitLoss(participant.id) > 0 ? '+' : '' }}&#8377;{{ getPlayerProfitLoss(participant.id) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bottom-actions">
+      <button type="button" class="btn btn-secondary" *ngIf="contest.participants.length && authService.isAdmin()" (click)="openResultsEntry()">Update Results</button>
+    </div>
+
+    <div class="winner-block panel" *ngIf="authService.isAdmin()">
+      <h3>Winner</h3>
+      <form [formGroup]="winnerForm" (ngSubmit)="onWinnerSubmit()" class="winner-form">
+        <select formControlName="winner">
+          <option value="">No winner selected</option>
+          <option *ngFor="let participant of contest.participants" [value]="participant.name">{{ participant.name }}</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Save Winner</button>
+      </form>
+
+      <p *ngIf="contest.winner" class="winner-text"><strong>{{ contest.winner }}</strong> is marked as winner.</p>
+      <p *ngIf="!contest.winner" class="winner-text">Winner is not set yet.</p>
+    </div>
+  </section>
+</section>
+
+<ng-template #missingContest>
+  <section class="panel missing-state">
+    <p>Contest not found.</p>
+    <button type="button" class="btn btn-secondary" (click)="goBack()">Back to contests</button>
+  </section>
+</ng-template>

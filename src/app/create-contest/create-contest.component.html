@@ -1,0 +1,79 @@
+<section class="page-head">
+  <h2 class="page-title">Create Contest</h2>
+  <p class="page-subtitle">Participants and winner can be added after contest creation.</p>
+</section>
+
+<form [formGroup]="contestForm" (ngSubmit)="onSubmit()" class="create-form">
+  <section class="panel block">
+    <h3>Contest Basics</h3>
+    <div class="field-grid">
+      <label>
+        Contest Name
+        <input type="text" formControlName="name" placeholder="IPL Match 1" />
+      </label>
+
+      <label>
+        Contest Date & Time
+        <input type="datetime-local" formControlName="date" />
+      </label>
+
+      <label>
+        Entry Fee (Fixed)
+        <input type="text" [value]="'Rs ' + fixedEntryFee" disabled />
+      </label>
+    </div>
+  </section>
+
+  <section class="panel block">
+    <h3>My11Circle Link Capture</h3>
+    <div class="field-grid">
+      <label>
+        Contest URL
+        <input
+          type="url"
+          formControlName="my11circleUrl"
+          placeholder="https://www.my11circle.com/..."
+          (blur)="captureContestLink()"
+        />
+      </label>
+
+      <label>
+        Contest ID
+        <input type="text" formControlName="my11circleId" placeholder="Auto-filled from URL when possible" />
+      </label>
+    </div>
+
+    <p class="helper" *ngIf="linkCaptureMessage">{{ linkCaptureMessage }}</p>
+  </section>
+
+  <section class="panel block">
+    <h3>Participants</h3>
+    <p class="helper">Minimum {{ minParticipants }} participants required.</p>
+    <div formArrayName="participants">
+      <div *ngFor="let participant of participants.controls; let i = index" [formGroupName]="i" class="participant-item">
+        <div class="field-grid">
+          <label>
+            Player Name
+            <input type="text" formControlName="name" placeholder="Player name" />
+          </label>
+          <div class="remove-btn">
+            <button type="button" class="btn btn-danger" (click)="removeParticipant(i)">Remove</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="helper text-negative" *ngIf="participantError">{{ participantError }}</p>
+    <button type="button" class="btn btn-secondary" (click)="addParticipant()">Add Participant</button>
+  </section>
+
+  <section class="panel block summary-panel">
+    <h3>Contest Summary</h3>
+    <p class="helper">Prize pool will be calculated automatically:</p>
+    <p class="formula">Prize Pool = {{ participants.length }} participants x Rs {{ fixedEntryFee }} = Rs {{ prizePool }}</p>
+  </section>
+
+  <div class="actions">
+    <button type="submit" class="btn btn-primary" [disabled]="isCreateDisabled">Create Contest</button>
+    <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+  </div>
+</form>

@@ -1,0 +1,65 @@
+<div class="login-wrapper">
+  <div class="login-container">
+    <div class="login-brand">
+      <div class="brand-content">
+        <div class="brand-icon">Trophy</div>
+        <h1 class="brand-title">Fantasy Contest</h1>
+        <p class="brand-subtitle">Tracker</p>
+        <p class="brand-description">Manage contests, track bets, and analyze results with ease.</p>
+      </div>
+    </div>
+
+    <div class="login-form-wrapper">
+      <div class="form-container">
+        <h2 class="form-title">Welcome Back</h2>
+        <p class="form-subtitle">Sign in to your account</p>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+          <div class="error-message" *ngIf="errorMessage">
+            <span class="error-icon">!</span>
+            <span>{{ errorMessage }}</span>
+          </div>
+
+          <div class="form-group">
+            <label for="username">
+              <span class="label-icon">User</span>
+              <span class="label-text">Username</span>
+            </label>
+            <div class="input-wrapper">
+              <input
+                type="text"
+                id="username"
+                formControlName="username"
+                placeholder="Enter your username"
+                required
+              >
+              <span class="input-icon">User</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">
+              <span class="label-icon">Lock</span>
+              <span class="label-text">Password</span>
+            </label>
+            <div class="input-wrapper">
+              <input
+                type="password"
+                id="password"
+                formControlName="password"
+                placeholder="Enter your password"
+                required
+              >
+              <span class="input-icon">Lock</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-login" [disabled]="!loginForm.valid || isSubmitting">
+            <span>{{ isSubmitting ? 'Signing In...' : 'Sign In' }}</span>
+            <span class="btn-icon">></span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

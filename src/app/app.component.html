@@ -1,0 +1,42 @@
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand-block">
+      <div class="brand-kicker">Tracker</div>
+      <h1>{{ appName }}</h1>
+    </div>
+
+    <nav class="top-nav" aria-label="Main navigation" *ngIf="authService.isLoggedIn()">
+      <a routerLink="/contests" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Contests</a>
+      <a routerLink="/contests/new" routerLinkActive="active" *ngIf="authService.isAdmin()">Create Contest</a>
+      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+      <button (click)="logout()" class="logout-btn">Logout</button>
+    </nav>
+  </header>
+
+  <section *ngIf="showBackupReminder" class="backup-reminder" role="status" aria-live="polite">
+    <p>You have unsaved progress in browser storage. Download a backup JSON to keep it safe.</p>
+    <div class="backup-actions">
+      <button type="button" class="btn btn-primary" (click)="downloadBackup()">Download Backup</button>
+      <button type="button" class="btn btn-secondary" (click)="dismissBackupReminder()">Dismiss</button>
+    </div>
+  </section>
+
+  <section *ngIf="startingSoonContests.length || pendingResultContests.length" class="alerts-strip">
+    <article class="alert-card" *ngIf="startingSoonContests.length">
+      <h3>Contest Starting Soon</h3>
+      <p *ngFor="let contest of startingSoonContests">
+        {{ contest.name }} - {{ contest.date | date:'short' }}
+      </p>
+    </article>
+    <article class="alert-card alert-card-warn" *ngIf="pendingResultContests.length">
+      <h3>Results Pending</h3>
+      <p *ngFor="let contest of pendingResultContests">
+        {{ contest.name }} - {{ contest.date | date:'shortDate' }}
+      </p>
+    </article>
+  </section>
+
+  <main class="page-shell">
+    <router-outlet></router-outlet>
+  </main>
+</div>

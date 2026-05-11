@@ -1,0 +1,215 @@
+<section class="dashboard" *ngIf="groupStats">
+  <header class="hero panel">
+    <div>
+      <h2 class="page-title">Analytics Dashboard</h2>
+      <p class="page-subtitle">Performance snapshot across all tracked contests.</p>
+    </div>
+    <div class="hero-actions">
+      <a routerLink="/contests" class="btn btn-secondary">All Contests</a>
+      <button type="button" class="btn btn-info" [disabled]="contests.length === 0" (click)="exportDashboardPdf()">
+        Export PDF
+      </button>
+      <a routerLink="/contests/new" class="btn btn-primary" *ngIf="authService.isAdmin()">Create Contest</a>
+    </div>
+  </header>
+
+  <section class="metric-grid">
+    <article class="metric-card">
+      <p class="metric-label">Total Contests</p>
+      <p class="metric-value">{{ groupStats.totalContests }}</p>
+    </article>
+    <article class="metric-card">
+      <p class="metric-label">Completed</p>
+      <p class="metric-value">{{ groupStats.completedContests }}</p>
+    </article>
+    <article class="metric-card">
+      <p class="metric-label">Total Entries</p>
+      <p class="metric-value">{{ getTotalContestEntries() }}</p>
+    </article>
+    <article class="metric-card">
+      <p class="metric-label">Total Invested</p>
+      <p class="metric-value">&#8377;{{ groupStats.totalInvested | number:'1.0-0' }}</p>
+    </article>
+    <article class="metric-card">
+      <p class="metric-label">Total Winnings</p>
+      <p class="metric-value">&#8377;{{ groupStats.totalWinnings | number:'1.0-0' }}</p>
+    </article>
+    <article class="metric-card">
+      <p class="metric-label">Group P/L</p>
+      <p class="metric-value" [class.text-positive]="groupStats.groupProfitLoss > 0" [class.text-negative]="groupStats.groupProfitLoss < 0">
+        {{ groupStats.groupProfitLoss > 0 ? '+' : '' }}&#8377;{{ groupStats.groupProfitLoss | number:'1.0-0' }}
+      </p>
+    </article>
+  </section>
+
+  <section class="panel" style="padding: 1rem; margin-top: 1rem;">
+    <h3>How It Works</h3>
+    <p class="page-subtitle">Create contest -> record results -> review rankings and ROI on this dashboard.</p>
+    <p class="page-subtitle">Admin can create/import/export contests. Viewer can track outcomes and analytics.</p>
+    <p class="page-subtitle">For reliable stats, keep player names consistent in every contest.</p>
+  </section>
+
+  <section class="highlights">
+    <article class="panel highlight-card" *ngIf="bestPerformingUser">
+      <p class="metric-label">Best Performing User</p>
+      <h3>{{ bestPerformingUser.name }}</h3>
+      <p class="metric-value text-positive">₹{{ bestPerformingUser.totalWinnings | number:'1.0-0' }}</p>
+      <p class="page-subtitle">Highest total winnings</p>
+    </article>
+
+    <article class="panel highlight-card" *ngIf="mostActivePlayer">
+      <p class="metric-label">Most Active Player</p>
+      <h3>{{ mostActivePlayer.name }}</h3>
+      <p class="metric-value">{{ mostActivePlayer.contestsParticipated }}</p>
+      <p class="page-subtitle">Most contests joined</p>
+    </article>
+
+    <article class="panel highlight-card" *ngIf="mostInactivePlayer">
+      <p class="metric-label">Most Inactive Player</p>
+      <h3>{{ mostInactivePlayer.name }}</h3>
+      <p class="metric-value">{{ mostInactivePlayer.contestsParticipated }}</p>
+      <p class="page-subtitle">Least contests joined</p>
+    </article>
+
+    <article class="panel highlight-card" *ngIf="groupStats.mostProfitable">
+      <p class="metric-label">Most Profitable Player</p>
+      <h3>{{ groupStats.mostProfitable.name }}</h3>
+      <p class="metric-value text-positive">+&#8377;{{ groupStats.mostProfitable.profitLoss | number:'1.0-0' }}</p>
+      <p class="page-subtitle">Avg Return: &#8377;{{ groupStats.mostProfitable.avgReturn | number:'1.0-0' }}</p>
+    </article>
+
+    <article class="panel highlight-card" *ngIf="groupStats.bestWinner">
+      <p class="metric-label">Most Contest Wins</p>
+      <h3>{{ groupStats.bestWinner.name }}</h3>
+      <p class="metric-value">{{ groupStats.bestWinner.winnerCount }}</p>
+      <p class="page-subtitle">Wins recorded from manual winner updates</p>
+    </article>
+
+    <article class="panel highlight-card" *ngIf="topRoiPlayer">
+      <p class="metric-label">Best ROI Player</p>
+      <h3>{{ topRoiPlayer.name }}</h3>
+      <p class="metric-value text-positive">{{ getROI(topRoiPlayer.totalInvested, topRoiPlayer.profitLoss) | number:'1.0-1' }}%</p>
+      <p class="page-subtitle">Based on total invested versus profit/loss</p>
+    </article>
+  </section>
+
+
+  <section class="panel table-panel">
+    <h3>Player Rankings</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Contests</th>
+            <th>Wins</th>
+            <th>Invested</th>
+            <th>Winnings</th>
+            <th>P/L</th>
+            <th>ROI</th>
+            <th>Avg Return</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let stat of playerStats; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>
+              <button type="button" class="player-link" (click)="showContestsForPlayer(stat.name)">
+                {{ stat.name }}
+              </button>
+            </td>
+            <td>{{ stat.contestsParticipated }}</td>
+            <td>
+              <button
+                type="button"
+                class="wins-link"
+                [disabled]="stat.winnerCount === 0"
+                (click)="showWinsForPlayer(stat.name)">
+                {{ stat.winnerCount }}
+              </button>
+            </td>
+            <td>&#8377;{{ stat.totalInvested | number:'1.0-0' }}</td>
+            <td>&#8377;{{ stat.totalWinnings | number:'1.0-0' }}</td>
+            <td [class.text-positive]="stat.profitLoss > 0" [class.text-negative]="stat.profitLoss < 0">
+              {{ stat.profitLoss > 0 ? '+' : '' }}&#8377;{{ stat.profitLoss | number:'1.0-0' }}
+            </td>
+            <td [class.text-positive]="getROI(stat.totalInvested, stat.profitLoss) > 0" [class.text-negative]="getROI(stat.totalInvested, stat.profitLoss) < 0">
+              {{ getROI(stat.totalInvested, stat.profitLoss) > 0 ? '+' : '' }}{{ getROI(stat.totalInvested, stat.profitLoss) | number:'1.0-1' }}%
+            </td>
+            <td>&#8377;{{ stat.avgReturn | number:'1.0-0' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel wins-panel" *ngIf="selectedWinsPlayer">
+    <div class="wins-head">
+      <h3>{{ selectedWinsPlayer }} - Winning Contests</h3>
+      <button type="button" class="btn btn-secondary" (click)="clearWinsSelection()">Close</button>
+    </div>
+    <section class="metric-grid wins-summary" *ngIf="selectedWinContests.length">
+      <article class="metric-card">
+        <p class="metric-label">Total Winning Matches</p>
+        <p class="metric-value">{{ selectedWinContests.length }}</p>
+      </article>
+      <article class="metric-card">
+        <p class="metric-label">Total Winning Amount</p>
+        <p class="metric-value text-positive">₹{{ getSelectedWinsTotalAmount() | number:'1.0-0' }}</p>
+      </article>
+    </section>
+    <p class="page-subtitle" *ngIf="!selectedWinContests.length">No winning contests found.</p>
+    <div class="wins-list" *ngIf="selectedWinContests.length">
+      <article class="wins-item" *ngFor="let contest of selectedWinContests">
+        <div class="wins-item-head">
+          <p><strong>{{ contest.name }}</strong></p>
+          <span class="wins-date">{{ contest.date | date:'mediumDate' }}</span>
+        </div>
+        <div class="wins-meta">
+          <p><span>Participants:</span> {{ contest.participants.length }}</p>
+          <p><span>Winning Amount:</span> ₹{{ getWinningAmountForContest(contest) | number:'1.0-0' }}</p>
+        </div>
+        <a class="btn btn-secondary" [routerLink]="['/contests', contest.id]">Open Contest</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="panel wins-panel" *ngIf="selectedPlayerName">
+    <div class="wins-head">
+      <h3>{{ selectedPlayerName }} - Participation History</h3>
+      <button type="button" class="btn btn-secondary" (click)="clearPlayerSelection()">Close</button>
+    </div>
+    <section class="metric-grid wins-summary" *ngIf="selectedPlayerContests.length">
+      <article class="metric-card">
+        <p class="metric-label">Contests Joined</p>
+        <p class="metric-value">{{ selectedPlayerContests.length }}</p>
+      </article>
+      <article class="metric-card">
+        <p class="metric-label">Total Invested</p>
+        <p class="metric-value">₹{{ getPlayerTotalInvestedAcrossSelected() | number:'1.0-0' }}</p>
+      </article>
+      <article class="metric-card">
+        <p class="metric-label">Total Winnings</p>
+        <p class="metric-value text-positive">₹{{ getPlayerTotalWinningsAcrossSelected() | number:'1.0-0' }}</p>
+      </article>
+    </section>
+    <p class="page-subtitle" *ngIf="!selectedPlayerContests.length">No contests found for this player.</p>
+    <div class="wins-list" *ngIf="selectedPlayerContests.length">
+      <article class="wins-item" *ngFor="let contest of selectedPlayerContests">
+        <div class="wins-item-head">
+          <p><strong>{{ contest.name }}</strong></p>
+          <span class="wins-date">{{ contest.date | date:'mediumDate' }}</span>
+        </div>
+        <div class="wins-meta">
+          <p><span>Participants:</span> {{ contest.participants.length }}</p>
+          <p><span>Entries:</span> {{ getPlayerEntryCount(contest) }}</p>
+          <p><span>Invested:</span> ₹{{ getPlayerInvestedAmount(contest) | number:'1.0-0' }}</p>
+          <p><span>Winnings:</span> ₹{{ getPlayerWinningsAmount(contest) | number:'1.0-0' }}</p>
+          <p><span>Rank:</span> {{ getPlayerRank(contest) ?? '-' }}</p>
+        </div>
+        <a class="btn btn-secondary" [routerLink]="['/contests', contest.id]">Open Contest</a>
+      </article>
+    </div>
+  </section>
+</section>

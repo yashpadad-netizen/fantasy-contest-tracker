@@ -1,0 +1,85 @@
+<section *ngIf="contest; else missingContest" class="results-layout">
+  <header class="page-head">
+    <h2 class="page-title">Record Results</h2>
+    <p class="page-subtitle">{{ contest.name }} | Entry Fee: &#8377;{{ contest.entryFee }}</p>
+  </header>
+
+  <form [formGroup]="resultsForm" (ngSubmit)="onSubmit()" class="panel form-panel">
+    <section class="import-box">
+      <h3>Quick Import</h3>
+      <p class="helper">Upload JSON/CSV results or a screenshot for OCR-assisted auto-fill.</p>
+      <p class="helper">Quality checks: ranks must be unique and exactly one participant must be rank 1.</p>
+      <div class="import-actions">
+        <label class="btn btn-secondary file-input">
+          Upload JSON/CSV
+          <input type="file" accept=".json,.csv,.txt" (change)="importResultsFromFile($event)" />
+        </label>
+
+        <label class="btn btn-secondary file-input">
+          Upload Screenshot (OCR)
+          <input type="file" accept="image/*" (change)="importResultsFromScreenshot($event)" />
+        </label>
+
+        <button type="button" class="btn btn-info" (click)="downloadResultsTemplate()">Download CSV Template</button>
+      </div>
+
+      <p class="helper" *ngIf="importMessage">{{ importMessage }}</p>
+      <p class="helper" *ngIf="ocrMessage">{{ ocrMessage }}</p>
+    </section>
+
+    <div formArrayName="results" class="rows">
+      <article *ngFor="let result of results.controls; let i = index" [formGroupName]="i" class="row-card">
+        <div class="player">
+          <h3>{{ result.get('playerName')?.value }}</h3>
+          <p>Invested: &#8377;{{ contest.entryFee * contest.participants[i].entryCount }}</p>
+        </div>
+
+        <label>
+          Rank
+          <input type="number" formControlName="rank" min="1" />
+        </label>
+
+        <label>
+          Winnings (&#8377;)
+          <input type="number" formControlName="winningAmount" min="0" />
+        </label>
+
+        <p class="pl" [class.text-positive]="getProfitLoss(i) > 0" [class.text-negative]="getProfitLoss(i) < 0">
+          {{ getProfitLoss(i) > 0 ? '+' : '' }}&#8377;{{ getProfitLoss(i) | number:'1.0-0' }}
+        </p>
+      </article>
+    </div>
+
+    <section class="summary panel">
+      <h3>Validation Summary</h3>
+      <p class="helper text-negative" *ngIf="resultsForm.errors?.['duplicateRanks']">Ranks must be unique for each participant.</p>
+      <p class="helper text-negative" *ngIf="resultsForm.errors?.['invalidWinnerCount']">Exactly one participant must have rank 1.</p>
+      <div class="metric-grid">
+        <article class="metric-card">
+          <p class="metric-label">Contest Prize Pool</p>
+          <p class="metric-value">&#8377;{{ contest.prizePool || 0 }}</p>
+        </article>
+        <article class="metric-card">
+          <p class="metric-label">Total Invested</p>
+          <p class="metric-value">&#8377;{{ getTotalInvested() }}</p>
+        </article>
+        <article class="metric-card">
+          <p class="metric-label">Total Winnings Entered</p>
+          <p class="metric-value">&#8377;{{ getTotalWinnings() }}</p>
+        </article>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-primary" [disabled]="resultsForm.invalid">Save Results</button>
+      <button type="button" class="btn btn-secondary" (click)="goBack()">Cancel</button>
+    </div>
+  </form>
+</section>
+
+<ng-template #missingContest>
+  <section class="panel missing-state">
+    <p>Contest not found.</p>
+    <button type="button" class="btn btn-secondary" (click)="goBack()">Back</button>
+  </section>
+</ng-template>

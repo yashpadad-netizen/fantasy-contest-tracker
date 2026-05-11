@@ -33,10 +33,6 @@ export class ContestService {
     return {
       ...contest,
       date: new Date(contest.date),
-      matchName: contest.matchName?.trim() || undefined,
-      tournament: contest.tournament?.trim() || undefined,
-      contestType: contest.contestType?.trim() || undefined,
-      notes: contest.notes?.trim() || undefined,
       participants: contest.participants ?? [],
       results: contest.results ?? [],
       isCompleted: contest.isCompleted ?? false

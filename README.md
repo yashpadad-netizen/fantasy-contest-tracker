@@ -4,7 +4,7 @@ Fantasy Contest Tracker is an Angular app for tracking My11Circle-style fantasy 
 
 ## What You Can Do
 
-- Create contests with match context (match name, tournament, contest type, notes)
+- Create contests with participant lists and entry-level tracking
 - Track participants and entry-level investments
 - Record contest results with manual entry, CSV/JSON import, or OCR-assisted screenshot parsing
 - View performance analytics on dashboard (P/L, ROI, top winner, most profitable player)
@@ -33,7 +33,7 @@ Password validation uses hash matching in frontend for local demo behavior. For 
 
 ## Recommended Workflow
 
-1. Create contest with metadata and participants.
+1. Create contest and participants.
 2. Record results after contest ends.
 3. Check dashboard for ROI and player rankings.
 4. Export all contests regularly for safe backup.
@@ -42,9 +42,8 @@ Password validation uses hash matching in frontend for local demo behavior. For 
 
 - Minimum participants per contest: `2`
 - Duplicate participant names in a contest are blocked
-- In results entry:
-- ranks must be unique
-- exactly one rank must be `1`
+- In results entry, ranks must be unique.
+- Exactly one rank must be `1`.
 - Keep player naming consistent across contests to get reliable analytics
 
 ## Import Formats
@@ -56,9 +55,6 @@ Password validation uses hash matching in frontend for local demo behavior. For 
   {
     "id": "contest-101",
     "name": "Evening League",
-    "matchName": "MI vs CSK",
-    "tournament": "IPL 2026",
-    "contestType": "Small League",
     "date": "2026-05-04T19:30:00.000Z",
     "entryFee": 20,
     "participants": [

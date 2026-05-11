@@ -5,11 +5,8 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "build:prod": "ng build --configuration production",
-    "start:prod": "npm run build:prod && node server/index.js",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "serve:api": "node server/index.js"
+    "test": "ng test"
   },
   "private": true,
   "dependencies": {
@@ -23,10 +20,7 @@
     "rxjs": "~7.8.0",
     "tesseract.js": "^7.0.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.15.0",
-    "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.0"
+    "zone.js": "~0.15.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^19.2.22",

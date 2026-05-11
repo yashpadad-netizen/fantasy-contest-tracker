@@ -3,8 +3,6 @@
     <div>
       <h2 class="page-title">{{ contest.name }}</h2>
       <p class="page-subtitle">{{ contest.date | date:'fullDate' }}</p>
-      <p class="page-subtitle" *ngIf="contest.matchName">{{ contest.matchName }}</p>
-      <p class="page-subtitle" *ngIf="contest.tournament">{{ contest.tournament }} <span *ngIf="contest.contestType">| {{ contest.contestType }}</span></p>
     </div>
 
     <div class="head-actions">
@@ -39,10 +37,6 @@
       <button *ngIf="contest.my11circleUrl" type="button" class="btn btn-secondary" (click)="openMy11Circle()">
         Open My11Circle
       </button>
-    </div>
-
-    <div class="meta-actions" *ngIf="contest.notes">
-      <p><strong>Notes:</strong> {{ contest.notes }}</p>
     </div>
 
     <div class="result-prompt" *ngIf="!contest.isCompleted && resultCount === 0">

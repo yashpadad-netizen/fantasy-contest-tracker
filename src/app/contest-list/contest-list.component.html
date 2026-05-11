@@ -90,16 +90,12 @@
     <div class="card-details">
       <p><span>Date:</span> {{ contest.date | date:'mediumDate' }}</p>
       <p><span>Platform:</span> {{ getPlatformLabel(contest) }}</p>
-      <p *ngIf="contest.matchName"><span>Match:</span> {{ contest.matchName }}</p>
-      <p *ngIf="contest.tournament"><span>Tournament:</span> {{ contest.tournament }}</p>
-      <p *ngIf="contest.contestType"><span>Type:</span> {{ contest.contestType }}</p>
       <p><span>Entry Fee:</span> &#8377;{{ contest.entryFee }}</p>
       <p><span>Participants:</span> {{ contest.participants.length }}</p>
       <p><span>Winner:</span> {{ contest.winner || '-' }}</p>
       <p><span>Total Entries:</span> {{ getTotalEntries(contest) }}</p>
       <p><span>Invested:</span> &#8377;{{ getTotalInvested(contest) }}</p>
       <p *ngIf="contest.prizePool"><span>Prize Pool:</span> &#8377;{{ contest.prizePool }}</p>
-      <p *ngIf="contest.notes"><span>Notes:</span> {{ contest.notes }}</p>
     </div>
 
     <div class="card-actions">

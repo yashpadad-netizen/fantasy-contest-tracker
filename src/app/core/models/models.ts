@@ -17,10 +17,6 @@ export interface Result {
 export interface Contest {
   id: string;
   name: string;
-  matchName?: string;
-  tournament?: string;
-  contestType?: string;
-  notes?: string;
   date: Date;
   participants: Player[];
   winner?: string;

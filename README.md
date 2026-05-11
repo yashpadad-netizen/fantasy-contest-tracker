@@ -79,7 +79,19 @@ Amit,3,1200
 
 - `npm start` - run dev server
 - `npm run build` - production build
+- `npm run build:ghpages` - build for GitHub Pages + create `404.html` SPA fallback
+- `npm run deploy:ghpages` - deploy to GitHub Pages
 - `npm test -- --watch=false --browsers=ChromeHeadless` - run tests once
+
+## GitHub Pages Routing
+
+For routes like `/fantasy-contest-tracker/login` to work on refresh/direct open, deploy using:
+
+```bash
+npm run deploy:ghpages
+```
+
+This build creates `404.html` from `index.html`, which is required for SPA route fallback on GitHub Pages.
 
 ## Tech Stack
 

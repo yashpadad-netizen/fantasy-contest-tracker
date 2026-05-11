@@ -1,74 +1,70 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { User } from '../models/models';
-import { API_BASE } from './api.config';
 
-interface AuthResponse {
-  user: User;
-  token: string;
+interface AuthRecord {
+  id: string;
+  name: string;
+  isAdmin: boolean;
+  username: string;
+  passwordHash: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  private readonly authSeed: AuthRecord[] = [
+    {
+      id: '1',
+      name: 'Admin',
+      isAdmin: true,
+      username: 'admin',
+      passwordHash: '9a0c5eb0b0cd3658d3aeefc41a63d8923264f5b454106bfa9a21fce9e29db989'
+    },
+    {
+      id: '2',
+      name: 'User',
+      isAdmin: false,
+      username: 'user',
+      passwordHash: '3e7c19576488862816f13b512cacf3e4ba97dd97243ea0bd6a2ad1642d86ba72'
+    }
+  ];
+
   private currentUser: User | null = null;
-  private token: string | null = null;
 
-  constructor(private router: Router, private http: HttpClient) {
-    this.loadSession();
-  }
-
-  private loadSession(): void {
-    const sessionData = localStorage.getItem('authSession');
-    if (!sessionData) {
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(sessionData) as { user: User; token: string };
-      this.currentUser = parsed.user;
-      this.token = parsed.token;
-    } catch {
-      this.currentUser = null;
-      this.token = null;
-    }
-  }
-
-  private saveSession(): void {
-    if (this.currentUser && this.token) {
-      localStorage.setItem('authSession', JSON.stringify({ user: this.currentUser, token: this.token }));
+  constructor(private router: Router) {
+    const userJson = localStorage.getItem('currentUser');
+    if (userJson) {
+      this.currentUser = JSON.parse(userJson);
     }
   }
 
   async login(username: string, password: string): Promise<boolean> {
-    try {
-      const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${API_BASE}/auth/login`, {
-          username: username.trim(),
-          password
-        })
-      );
-      this.currentUser = response.user;
-      this.token = response.token;
-      this.saveSession();
-      return true;
-    } catch {
+    const normalizedUsername = username.trim().toLowerCase();
+    const account = this.authSeed.find((record) => record.username === normalizedUsername);
+    if (!account) {
       return false;
     }
+
+    const enteredHash = await this.hashPassword(password);
+    if (enteredHash !== account.passwordHash) {
+      return false;
+    }
+
+    this.currentUser = { id: account.id, name: account.name, isAdmin: account.isAdmin };
+    localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+    return true;
   }
 
   logout(): void {
     this.currentUser = null;
-    this.token = null;
-    localStorage.removeItem('authSession');
+    localStorage.removeItem('currentUser');
     this.router.navigate(['/login']);
   }
 
   isLoggedIn(): boolean {
-    return this.currentUser !== null && this.token !== null;
+    return this.currentUser !== null;
   }
 
   isAdmin(): boolean {
@@ -79,7 +75,11 @@ export class AuthService {
     return this.currentUser;
   }
 
-  getToken(): string | null {
-    return this.token;
+  private async hashPassword(password: string): Promise<string> {
+    const payload = new TextEncoder().encode(password);
+    const digest = await crypto.subtle.digest('SHA-256', payload);
+    return Array.from(new Uint8Array(digest))
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
   }
 }

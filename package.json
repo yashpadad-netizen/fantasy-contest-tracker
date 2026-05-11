@@ -5,6 +5,8 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:ghpages": "ng build --configuration production --base-href /fantasy-contest-tracker/ && node tools/prepare-gh-pages.js",
+    "deploy:ghpages": "npm run build:ghpages && npx angular-cli-ghpages --dir=dist/fantasy-contest-tracker",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

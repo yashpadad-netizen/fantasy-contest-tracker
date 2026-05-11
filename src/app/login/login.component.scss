@@ -1,10 +1,10 @@
 .login-wrapper {
-  min-height: 100vh;
+  min-height: calc(100dvh - 170px);
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 1rem;
+  padding: clamp(0.5rem, 1.4vw, 1rem);
   animation: gradientBG 15s ease infinite;
   background-size: 200% 200%;
 }
@@ -26,7 +26,7 @@
   grid-template-columns: 1fr 1fr;
   max-width: 900px;
   width: 100%;
-  height: 600px;
+  min-height: min(600px, calc(100dvh - 220px));
   background: white;
   border-radius: 16px;
   overflow: hidden;
@@ -380,8 +380,9 @@ input {
 @media (max-width: 768px) {
   .login-container {
     grid-template-columns: 1fr;
+    min-height: auto;
     height: auto;
-    max-height: 100vh;
+    max-height: none;
     overflow-y: auto;
   }
 
@@ -422,6 +423,7 @@ input {
 @media (max-width: 480px) {
   .login-wrapper {
     padding: 0.5rem;
+    min-height: calc(100dvh - 140px);
   }
 
   .login-brand,
